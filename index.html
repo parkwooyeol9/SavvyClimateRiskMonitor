@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Climate Risk Monitor — physical and transition risk intelligence for assets, portfolios, and disclosure-ready reporting." />
+  <title>Climate Risk Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="mesh" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <nav class="nav container">
+      <a class="logo" href="#">
+        <span class="logo-mark" aria-hidden="true"></span>
+        Climate Risk Monitor
+      </a>
+      <div class="nav-links">
+        <a href="#app-dashboard">Dashboard</a>
+        <a href="#hazards">Hazards</a>
+        <a href="#scenarios">Scenarios</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#contact" class="btn btn-sm">Request access</a>
+      </div>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div class="hero-copy">
+        <p class="eyebrow">Physical &amp; transition risk intelligence</p>
+        <h1>See climate exposure before it hits the balance sheet</h1>
+        <p class="lead">
+          Map assets to IPCC-aligned scenarios, score 12 physical hazards, and stress-test
+          transition pathways — from a single location to an entire portfolio.
+        </p>
+        <div class="hero-actions">
+          <a href="#app-dashboard" class="btn">Explore demo dashboard</a>
+          <a href="#how-it-works" class="btn btn-ghost">How it works</a>
+        </div>
+        <ul class="hero-meta">
+          <li>SSP2-4.5 &amp; SSP5-8.5</li>
+          <li>2030 – 2050 horizons</li>
+          <li>TCFD / ISSB S2 ready</li>
+        </ul>
+      </div>
+
+      <div class="hero-panel" id="dashboard-preview">
+        <div class="panel-header">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>Portfolio snapshot</span>
+          <span class="panel-tag">Live demo</span>
+        </div>
+        <div class="panel-grid">
+          <article class="metric-card">
+            <span class="metric-label">Composite risk score</span>
+            <span class="metric-value risk-high" id="hero-score">—</span>
+            <span class="metric-delta">Updates with dashboard filters</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Assets at elevated risk</span>
+            <span class="metric-value" id="hero-elevated">—</span>
+            <span class="metric-delta">Score ≥ 60</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Transition VaR</span>
+            <span class="metric-value" id="hero-var">—</span>
+            <span class="metric-delta">NGFS disorderly scenario</span>
+          </article>
+        </div>
+        <div class="heatmap" role="img" aria-label="Sample geographic risk heatmap">
+          <div class="heatmap-legend">
+            <span>Low</span>
+            <div class="legend-bar"></div>
+            <span>High</span>
+          </div>
+          <svg viewBox="0 0 400 220" class="heatmap-svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#34d399" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#34d399" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="400" height="220" fill="#0f172a" rx="8" />
+            <path d="M40 120 Q120 80 200 100 T360 90" stroke="#1e3a5f" stroke-width="1.5" fill="none" opacity="0.6" />
+            <path d="M60 160 Q180 140 280 150 T380 130" stroke="#1e3a5f" stroke-width="1" fill="none" opacity="0.4" />
+            <circle cx="95" cy="88" r="28" fill="url(#glow)" />
+            <circle cx="95" cy="88" r="6" fill="#f87171" />
+            <circle cx="210" cy="105" r="22" fill="url(#glow)" />
+            <circle cx="210" cy="105" r="5" fill="#fbbf24" />
+            <circle cx="310" cy="72" r="18" fill="url(#glow)" />
+            <circle cx="310" cy="72" r="4" fill="#f87171" />
+            <circle cx="165" cy="155" r="14" fill="url(#glow)" />
+            <circle cx="165" cy="155" r="4" fill="#34d399" />
+            <circle cx="340" cy="140" r="12" fill="url(#glow)" />
+            <circle cx="340" cy="140" r="3" fill="#fbbf24" />
+          </svg>
+        </div>
+        <div class="panel-footer">
+          <span id="hero-driver">Top driver: —</span>
+          <span>Jul 2026</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="dash-section section-alt" id="app-dashboard">
+      <div class="container-wide">
+        <div class="dash-head">
+          <div>
+            <p class="eyebrow">Interactive demo</p>
+            <h2>Portfolio risk dashboard</h2>
+            <p class="section-sub">12 demo assets · scenario engine · map · charts · CSV export — all runs locally in your browser.</p>
+          </div>
+          <div class="dash-head-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-reset">Reset filters</button>
+            <button type="button" class="btn btn-sm" id="btn-export">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="dash-toolbar">
+          <label class="ctrl">
+            <span>Scenario</span>
+            <select id="ctrl-scenario"></select>
+          </label>
+          <label class="ctrl">
+            <span>Horizon</span>
+            <select id="ctrl-horizon"></select>
+          </label>
+          <label class="ctrl">
+            <span>Region</span>
+            <select id="ctrl-region"></select>
+          </label>
+          <label class="ctrl">
+            <span>Map hazard</span>
+            <select id="ctrl-hazard"></select>
+          </label>
+          <label class="ctrl ctrl-search">
+            <span>Search assets</span>
+            <input type="search" id="ctrl-search" placeholder="Name, ID, region…" />
+          </label>
+          <label class="ctrl ctrl-check">
+            <input type="checkbox" id="ctrl-compare" />
+            <span>Compare SSP scenarios</span>
+          </label>
+        </div>
+
+        <div class="dash-kpis">
+          <article class="kpi-card">
+            <span class="kpi-label">Avg composite score</span>
+            <span class="kpi-value" id="kpi-score">—</span>
+            <span class="kpi-sub" id="dash-updated">—</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Elevated assets</span>
+            <span class="kpi-value" id="kpi-elevated">—</span>
+            <span class="kpi-sub" id="kpi-elevated-sub">—</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Transition VaR</span>
+            <span class="kpi-value" id="kpi-var">—</span>
+            <span class="kpi-sub" id="kpi-var-sub">—</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Portfolio value</span>
+            <span class="kpi-value" id="kpi-value">—</span>
+            <span class="kpi-sub" id="kpi-value-sub">—</span>
+          </article>
+          <article class="kpi-card">
+            <span class="kpi-label">Top hazard driver</span>
+            <span class="kpi-value kpi-text" id="kpi-driver">—</span>
+            <span class="kpi-sub" id="kpi-driver-sub">—</span>
+          </article>
+        </div>
+
+        <div class="hazard-toggles" aria-label="Quick hazard filter">
+          <button type="button" class="hazard-toggle active" data-hazard="flood">Flood</button>
+          <button type="button" class="hazard-toggle" data-hazard="heat">Heat</button>
+          <button type="button" class="hazard-toggle" data-hazard="wildfire">Wildfire</button>
+          <button type="button" class="hazard-toggle" data-hazard="seaLevel">Sea level</button>
+          <button type="button" class="hazard-toggle" data-hazard="drought">Drought</button>
+          <button type="button" class="hazard-toggle" data-hazard="wind">Wind</button>
+        </div>
+
+        <div class="dash-grid-main">
+          <div class="dash-card dash-map-card">
+            <div class="dash-card-head">
+              <h3>Geographic exposure</h3>
+              <span class="panel-tag">Click marker for detail</span>
+            </div>
+            <div id="risk-map" class="risk-map"></div>
+          </div>
+
+          <div class="dash-card" id="asset-detail-card">
+            <div class="dash-card-head"><h3>Asset detail</h3></div>
+            <div id="asset-detail" class="asset-detail"></div>
+          </div>
+        </div>
+
+        <div class="dash-grid-charts">
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Portfolio risk trend</h3></div>
+            <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Hazard breakdown (avg)</h3></div>
+            <div class="chart-wrap chart-wrap-tall"><canvas id="chart-hazards"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Assets by region</h3></div>
+            <div class="chart-wrap"><canvas id="chart-regions"></canvas></div>
+          </div>
+        </div>
+
+        <div class="dash-card" id="compare-panel" hidden>
+          <div class="dash-card-head"><h3 id="compare-title">Scenario comparison</h3></div>
+          <div class="chart-wrap"><canvas id="chart-compare"></canvas></div>
+        </div>
+
+        <div class="dash-grid-bottom">
+          <div class="dash-card dash-table-card">
+            <div class="dash-card-head"><h3>Asset registry</h3><span class="panel-tag">Sortable · click row</span></div>
+            <div class="table-scroll">
+              <table class="asset-table" id="asset-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Region</th>
+                    <th>Sector</th>
+                    <th>Value</th>
+                    <th>Score</th>
+                    <th>Top hazard</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Climate alerts</h3></div>
+            <ul class="alert-list" id="alert-list"></ul>
+          </div>
+
+          <div class="dash-card transition-card">
+            <div class="dash-card-head">
+              <h3>Transition risk</h3>
+              <span class="panel-tag" id="trans-scenario-label">—</span>
+            </div>
+            <div class="transition-metrics">
+              <div class="trans-metric">
+                <span>Implied carbon price</span>
+                <strong id="trans-carbon">—</strong>
+              </div>
+              <div class="trans-metric">
+                <span>Stranded asset exposure</span>
+                <strong id="trans-stranded">—</strong>
+              </div>
+              <div class="trans-metric">
+                <span>Disorderly VaR</span>
+                <strong id="trans-var">—</strong>
+              </div>
+            </div>
+            <p class="trans-note">NGFS pathway estimates for selected scenario and horizon. Demo values only.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-bar">
+      <div class="container stats-inner">
+        <div class="stat">
+          <strong>12</strong>
+          <span>Physical hazards modeled</span>
+        </div>
+        <div class="stat">
+          <strong>2</strong>
+          <span>IPCC SSP scenarios</span>
+        </div>
+        <div class="stat">
+          <strong>4</strong>
+          <span>Time horizons to 2050</span>
+        </div>
+        <div class="stat">
+          <strong>&lt;2 min</strong>
+          <span>Per-location assessment</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container" id="risk-types">
+      <div class="section-head">
+        <p class="eyebrow">Two sides of climate risk</p>
+        <h2>Physical and transition exposure in one view</h2>
+      </div>
+      <div class="card-grid two-col">
+        <article class="feature-card">
+          <div class="card-icon physical" aria-hidden="true">◎</div>
+          <h3>Physical risk</h3>
+          <p>Acute events (floods, storms, wildfires) and chronic shifts (heat stress, drought, sea-level rise) mapped to asset coordinates with scenario-weighted probabilities.</p>
+          <ul class="tag-list">
+            <li>Flood</li>
+            <li>Heat</li>
+            <li>Wildfire</li>
+            <li>Sea level</li>
+          </ul>
+        </article>
+        <article class="feature-card">
+          <div class="card-icon transition" aria-hidden="true">↗</div>
+          <h3>Transition risk</h3>
+          <p>Policy, technology, and market pathways from NGFS and IEA scenarios — carbon pricing, stranded assets, and sector disruption translated into financial impact.</p>
+          <ul class="tag-list">
+            <li>Carbon price</li>
+            <li>Stranded assets</li>
+            <li>Policy shock</li>
+            <li>Sector tilt</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section container" id="hazards">
+      <div class="section-head">
+        <p class="eyebrow">Hazard coverage</p>
+        <h2>12 perils, site-level resolution</h2>
+        <p class="section-sub">Comparable to leading platforms — unified scoring instead of stitching vendors together.</p>
+      </div>
+      <div class="hazard-grid">
+        <div class="hazard" data-level="high"><span class="hazard-name">Inland flood</span><span class="hazard-score">High</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Coastal flood</span><span class="hazard-score">Med</span></div>
+        <div class="hazard" data-level="high"><span class="hazard-name">Extreme heat</span><span class="hazard-score">High</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Drought</span><span class="hazard-score">Med</span></div>
+        <div class="hazard" data-level="low"><span class="hazard-name">Wildfire</span><span class="hazard-score">Low</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Storm surge</span><span class="hazard-score">Med</span></div>
+        <div class="hazard" data-level="low"><span class="hazard-name">Landslide</span><span class="hazard-score">Low</span></div>
+        <div class="hazard" data-level="high"><span class="hazard-name">Sea-level rise</span><span class="hazard-score">High</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Water stress</span><span class="hazard-score">Med</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Extreme wind</span><span class="hazard-score">Med</span></div>
+        <div class="hazard" data-level="low"><span class="hazard-name">Hail</span><span class="hazard-score">Low</span></div>
+        <div class="hazard" data-level="medium"><span class="hazard-name">Precipitation</span><span class="hazard-score">Med</span></div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="scenarios">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">Scenario analysis</p>
+          <h2>Compare pathways side by side</h2>
+        </div>
+        <div class="scenario-table-wrap">
+          <table class="scenario-table">
+            <thead>
+              <tr>
+                <th>Hazard</th>
+                <th>SSP2-4.5 · 2030</th>
+                <th>SSP2-4.5 · 2050</th>
+                <th>SSP5-8.5 · 2030</th>
+                <th>SSP5-8.5 · 2050</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Inland flood</td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-high">High</span></td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-high">High</span></td>
+              </tr>
+              <tr>
+                <td>Extreme heat</td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-high">High</span></td>
+                <td><span class="pill pill-high">High</span></td>
+                <td><span class="pill pill-high">High</span></td>
+              </tr>
+              <tr>
+                <td>Sea-level rise</td>
+                <td><span class="pill pill-low">Low</span></td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-high">High</span></td>
+              </tr>
+              <tr>
+                <td>Wildfire</td>
+                <td><span class="pill pill-low">Low</span></td>
+                <td><span class="pill pill-low">Low</span></td>
+                <td><span class="pill pill-med">Medium</span></td>
+                <td><span class="pill pill-med">Medium</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-note">Sample output for a single asset. Full portfolio exports available in Excel and API.</p>
+      </div>
+    </section>
+
+    <section class="section container" id="how-it-works">
+      <div class="section-head">
+        <p class="eyebrow">Workflow</p>
+        <h2>From coordinates to disclosure in four steps</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <div>
+            <h3>Upload assets</h3>
+            <p>Import sites by address, lat/long, or portfolio holdings. Bulk CSV and API supported.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div>
+            <h3>Run scenario models</h3>
+            <p>Overlay IPCC CMIP6 projections for physical hazards and NGFS pathways for transition risk.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div>
+            <h3>Identify concentrations</h3>
+            <p>Heatmaps and rankings surface the holdings driving most of your climate exposure.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div>
+            <h3>Export disclosures</h3>
+            <p>Generate TCFD-, ISSB S2-, and CSRD-aligned narratives with auditable methodology notes.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="section container">
+      <div class="compliance">
+        <p class="eyebrow">Regulatory alignment</p>
+        <div class="badge-row">
+          <span class="badge">TCFD</span>
+          <span class="badge">ISSB S2</span>
+          <span class="badge">EU CSRD</span>
+          <span class="badge">NGFS</span>
+          <span class="badge">SFDR</span>
+        </div>
+        <p>Structured outputs designed for assurance-ready climate disclosures — not just pretty charts.</p>
+      </div>
+    </section>
+
+    <section class="cta section" id="contact">
+      <div class="container cta-inner">
+        <h2>Start monitoring climate risk</h2>
+        <p>We're building the first version. Join the waitlist for early access to portfolio screening and site-level reports.</p>
+        <form class="cta-form" id="waitlist-form">
+          <input type="email" name="email" placeholder="you@company.com" required aria-label="Email address" />
+          <button type="submit" class="btn">Join waitlist</button>
+        </form>
+        <p class="form-note" id="form-message" hidden>Thanks — we'll be in touch.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span>Climate Risk Monitor</span>
+      </div>
+      <p class="footer-copy">Demo homepage · Jul 2026 · Not financial advice</p>
+      <div class="footer-links">
+        <a href="#">Methodology</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
