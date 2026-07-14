@@ -79,6 +79,25 @@ function destroyChart(chart) {
   return null;
 }
 
+function downsample(labels, values, maxPoints = 120) {
+  if (!labels?.length || labels.length <= maxPoints) {
+    return { labels, values };
+  }
+  const step = Math.ceil(labels.length / maxPoints);
+  const outL = [];
+  const outV = [];
+  for (let i = 0; i < labels.length; i += step) {
+    outL.push(labels[i]);
+    outV.push(values[i]);
+  }
+  // always keep last point
+  if (outL[outL.length - 1] !== labels[labels.length - 1]) {
+    outL.push(labels[labels.length - 1]);
+    outV.push(values[values.length - 1]);
+  }
+  return { labels: outL, values: outV };
+}
+
 function renderEnergyChart() {
   const canvas = $("#chart-energy");
   if (!canvas || typeof Chart === "undefined" || !marketsData?.charts?.energy) return;
@@ -90,17 +109,19 @@ function renderEnergyChart() {
 
   const primary = series[0];
   const secondary = series[1];
-  const p = sliceByRange(primary.labels, primary.values, energyRange);
+  let p = sliceByRange(primary.labels, primary.values, energyRange);
+  p = downsample(p.labels, p.values, 100);
 
   let secondaryAligned = null;
   if (secondary) {
     const s = sliceByRange(secondary.labels, secondary.values, energyRange);
     const map = new Map(s.labels.map((d, i) => [d, s.values[i]]));
     let last = null;
-    secondaryAligned = p.labels.map((d) => {
+    const fullAligned = p.labels.map((d) => {
       if (map.has(d)) last = map.get(d);
       return last;
     });
+    secondaryAligned = fullAligned;
   }
 
   energyChart = new Chart(canvas, {
@@ -109,11 +130,11 @@ function renderEnergyChart() {
       labels: p.labels,
       datasets: [
         {
-          label: `${primary.label} (${primary.unit})`,
+          label: `${primary.label}`,
           data: p.values,
           borderColor: primary.color,
-          backgroundColor: `${primary.color}18`,
-          borderWidth: 2,
+          backgroundColor: `${primary.color}14`,
+          borderWidth: 1.75,
           pointRadius: 0,
           tension: 0.2,
           fill: true,
@@ -121,10 +142,10 @@ function renderEnergyChart() {
         },
         secondary && secondaryAligned
           ? {
-              label: `${secondary.label} (${secondary.unit})`,
+              label: `${secondary.label}`,
               data: secondaryAligned,
               borderColor: secondary.color,
-              borderWidth: 2,
+              borderWidth: 1.75,
               pointRadius: 0,
               tension: 0.2,
               fill: false,
@@ -136,36 +157,47 @@ function renderEnergyChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: 0 },
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 } } },
-        title: {
-          display: true,
-          text: "Energy prices (FRED)",
-          color: "#e8eef5",
-          font: { size: 13, weight: "600" },
+        legend: {
+          position: "top",
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 10 }, padding: 8 },
         },
+        title: { display: false },
       },
       scales: {
         x: {
           ticks: {
-            maxTicksLimit: 8,
+            maxTicksLimit: 5,
+            font: { size: 10 },
             callback(v) {
               const l = this.getLabelForValue(v);
-              return l?.slice?.(0, 7) || l;
+              return l?.slice?.(2, 7) || l;
             },
           },
-          title: { display: true, text: "Date" },
+          title: { display: false },
+          grid: { display: false },
         },
         y: {
           position: "left",
-          title: { display: true, text: primary.unit },
+          ticks: { maxTicksLimit: 5, font: { size: 10 } },
+          title: {
+            display: true,
+            text: primary.unit,
+            font: { size: 10 },
+          },
           grid: { color: "rgba(148,163,184,0.08)" },
         },
         y1: {
           position: "right",
           display: Boolean(secondary),
-          title: { display: Boolean(secondary), text: secondary?.unit || "" },
+          ticks: { maxTicksLimit: 5, font: { size: 10 } },
+          title: {
+            display: Boolean(secondary),
+            text: secondary?.unit || "",
+            font: { size: 10 },
+          },
           grid: { drawOnChartArea: false },
         },
       },
@@ -182,16 +214,20 @@ function renderRelativeChart() {
   const slicedLabels = sliceByRange(labels, labels, relativeRange).labels;
   const startIdx = labels.length - slicedLabels.length;
 
-  // Re-index so each visible range starts at 100
+  const sampledMeta = downsample(slicedLabels, slicedLabels.map((_, i) => i), 100);
+  const chartLabels = sampledMeta.labels;
+  const pickIdx = sampledMeta.values;
+
   const datasets = series.map((s) => {
     const raw = s.values.slice(startIdx);
-    const first = raw.find((v) => v != null && Number.isFinite(v));
+    const picked = pickIdx.map((i) => raw[i]);
+    const first = picked.find((v) => v != null && Number.isFinite(v));
     const base = first || 100;
     return {
-      label: `${s.symbol} (${s.tilt})`,
-      data: raw.map((v) => (v == null ? null : (v / base) * 100)),
+      label: `${s.symbol}`,
+      data: picked.map((v) => (v == null ? null : (v / base) * 100)),
       borderColor: s.color,
-      borderWidth: 2,
+      borderWidth: 1.75,
       pointRadius: 0,
       tension: 0.2,
       fill: false,
@@ -201,21 +237,20 @@ function renderRelativeChart() {
   relativeChart = new Chart(canvas, {
     type: "line",
     data: {
-      labels: slicedLabels,
+      labels: chartLabels,
       datasets,
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: 0 },
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 } } },
-        title: {
-          display: true,
-          text: "Green vs fossil — indexed (100 = start of selected range)",
-          color: "#e8eef5",
-          font: { size: 13, weight: "600" },
+        legend: {
+          position: "top",
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 10 }, padding: 8 },
         },
+        title: { display: false },
         tooltip: {
           callbacks: {
             label: (ctx) => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y, 1)}`,
@@ -225,16 +260,23 @@ function renderRelativeChart() {
       scales: {
         x: {
           ticks: {
-            maxTicksLimit: 8,
+            maxTicksLimit: 5,
+            font: { size: 10 },
             callback(v) {
               const l = this.getLabelForValue(v);
-              return l?.slice?.(0, 7) || l;
+              return l?.slice?.(2, 7) || l;
             },
           },
-          title: { display: true, text: "Date" },
+          title: { display: false },
+          grid: { display: false },
         },
         y: {
-          title: { display: true, text: "Indexed level" },
+          ticks: { maxTicksLimit: 5, font: { size: 10 } },
+          title: {
+            display: true,
+            text: "Index (100 = start)",
+            font: { size: 10 },
+          },
           grid: { color: "rgba(148,163,184,0.08)" },
         },
       },
