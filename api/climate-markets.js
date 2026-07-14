@@ -140,7 +140,56 @@ async function fetchFmpHistory(apiKey, symbol, limit = 400) {
   return null;
 }
 
-async function fetchFinnhubCandles(apiKey, symbol, days = 365) {
+async function fetchYahooHistory(symbol, range = "2y") {
+  const url =
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}` +
+    `?range=${range}&interval=1d&includePrePost=false&events=div%7Csplit`;
+  const data = await fetchJson(url);
+  const result = data?.chart?.result?.[0];
+  const timestamps = result?.timestamp;
+  const closes = result?.indicators?.quote?.[0]?.close;
+  if (!Array.isArray(timestamps) || !Array.isArray(closes)) return null;
+
+  const pairs = [];
+  for (let i = 0; i < timestamps.length; i++) {
+    const c = closes[i];
+    if (c == null || !Number.isFinite(Number(c))) continue;
+    pairs.push({
+      date: new Date(timestamps[i] * 1000).toISOString().slice(0, 10),
+      close: Number(c),
+    });
+  }
+  if (!pairs.length) return null;
+  const labels = pairs.map((p) => p.date);
+  const values = pairs.map((p) => p.close);
+  const base = values[0] || 1;
+  return {
+    labels,
+    values,
+    indexed: values.map((v) => (v / base) * 100),
+    source: "yahoo",
+  };
+}
+
+async function fetchEquityHistory(symbol, { finnhubKey, fmpKey }) {
+  if (finnhubKey) {
+    try {
+      const candles = await fetchFinnhubCandles(finnhubKey, symbol, 400);
+      if (candles) return candles;
+    } catch {
+      /* fall through */
+    }
+  }
+  if (fmpKey) {
+    try {
+      const hist = await fetchFmpHistory(fmpKey, symbol, 400);
+      if (hist) return hist;
+    } catch {
+      /* fall through */
+    }
+  }
+  return fetchYahooHistory(symbol, "2y");
+}
   const to = Math.floor(Date.now() / 1000);
   const from = to - days * 24 * 60 * 60;
   const url =
@@ -323,17 +372,6 @@ module.exports = async function handler(req, res) {
       })
     );
 
-    await Promise.all(
-      candleSymbols.map(async (symbol) => {
-        try {
-          const candles = await fetchFinnhubCandles(finnhubKey, symbol, 400);
-          if (candles) candleMap[symbol] = candles;
-        } catch (e) {
-          errors.push(`Finnhub candle ${symbol}: ${e.message}`);
-        }
-      })
-    );
-
     try {
       news = await fetchFinnhubNews(finnhubKey);
     } catch (e) {
@@ -341,21 +379,17 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // FMP historical fallback when Finnhub candles are restricted (common on free tier)
-  if (fmpKey) {
-    await Promise.all(
-      candleSymbols
-        .filter((symbol) => !candleMap[symbol])
-        .map(async (symbol) => {
-          try {
-            const hist = await fetchFmpHistory(fmpKey, symbol, 400);
-            if (hist) candleMap[symbol] = hist;
-          } catch (e) {
-            errors.push(`FMP history ${symbol}: ${e.message}`);
-          }
-        })
-    );
-  }
+  await Promise.all(
+    candleSymbols.map(async (symbol) => {
+      try {
+        const hist = await fetchEquityHistory(symbol, { finnhubKey, fmpKey });
+        if (hist) candleMap[symbol] = hist;
+        else errors.push(`History ${symbol}: no data from Finnhub/FMP/Yahoo`);
+      } catch (e) {
+        errors.push(`History ${symbol}: ${e.message}`);
+      }
+    })
+  );
 
   if (fmpKey) {
     const missing = ETF_TICKERS.filter((t) => !etfs.find((e) => e.symbol === t.symbol)).map(
