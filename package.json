@@ -1,0 +1,15 @@
+{
+  "name": "climate-risk-monitor",
+  "private": true,
+  "description": "Savvy Climate Risk Monitor — static landing page + interactive dashboard",
+  "scripts": {
+    "dev": "python3 -m http.server 8081",
+    "deploy": "vercel --prod"
+  },
+  "devDependencies": {
+    "vercel": "^56.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

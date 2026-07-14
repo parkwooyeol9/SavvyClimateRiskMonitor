@@ -4,13 +4,14 @@ Standalone climate risk intelligence platform — separate from [SavvyETF](https
 
 Interactive landing page + local portfolio dashboard for physical and transition risk, IPCC scenario analysis, and disclosure-ready reporting.
 
+**Live site:** [https://climate-risk-monitor.vercel.app](https://climate-risk-monitor.vercel.app)  
 **Planned domain:** [SavvyClimateRiskMonitor.com](https://savvyclimateriskmonitor.com)
 
 ## Quick start
 
 ```bash
-git clone <your-repo-url>
-cd climate-risk-monitor
+git clone https://github.com/parkwooyeol9/SavvyClimateRiskMonitor.git
+cd SavvyClimateRiskMonitor
 python3 -m http.server 8081
 ```
 
@@ -59,34 +60,30 @@ Static HTML, CSS, vanilla JS (ES modules). CDN: Leaflet, Chart.js, Google Fonts.
 
 ## Deploy (Vercel)
 
+**Production:** https://climate-risk-monitor.vercel.app  
+**Project:** https://vercel.com/s-quant/climate-risk-monitor
+
 Config: [`vercel.json`](./vercel.json) — static site, no build step, security + cache headers.
 
-### Option A — GitHub (recommended)
-
-1. Push this repo to GitHub
-2. Go to [vercel.com/new](https://vercel.com/new) → Import the repo
-3. Framework Preset: **Other** · Build Command: leave empty · Output Directory: `.` (root)
-4. Deploy — you get a `*.vercel.app` URL
-
-Custom domain (`SavvyClimateRiskMonitor.com`):
-
-1. Vercel project → **Settings → Domains** → add the domain
-2. At your registrar, set DNS as Vercel shows (usually `A` / `CNAME`)
-3. Wait for SSL (often a few minutes)
-
-### Option B — Vercel CLI
+### Redeploy
 
 ```bash
-npm i -g vercel
-cd climate-risk-monitor
-vercel          # preview
-vercel --prod   # production
+npm install
+npx vercel --prod
 ```
+
+### Custom domain (`SavvyClimateRiskMonitor.com`)
+
+1. Buy the domain at your registrar
+2. Vercel → project → **Settings → Domains** → add the domain
+3. Set DNS as Vercel instructs (`A` / `CNAME`)
+4. Wait for SSL
 
 ### Phase 1 — Ship the demo
 - [x] Vercel deploy config (`vercel.json`)
-- [ ] GitHub repo + push
-- [ ] Vercel project + custom domain
+- [x] Production deploy (climate-risk-monitor.vercel.app)
+- [ ] GitHub repo connected for auto-deploy
+- [ ] Custom domain
 - [ ] Waitlist backend (Formspree or Resend)
 
 ### Phase 2 — Real data
