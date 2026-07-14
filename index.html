@@ -22,6 +22,7 @@
       </a>
       <div class="nav-links">
         <a href="#app-dashboard">Dashboard</a>
+        <a href="#climate-markets">Markets</a>
         <a href="#audience">Who it's for</a>
         <a href="#methodology">Methodology</a>
         <a href="#faq">FAQ</a>
@@ -294,6 +295,30 @@
           <span>Per-location assessment</span>
         </div>
       </div>
+    </section>
+
+    <section class="section container" id="climate-markets">
+      <div class="section-head">
+        <p class="eyebrow">Live climate finance</p>
+        <h2>Energy prices, transition ETFs &amp; related news</h2>
+        <p class="section-sub">
+          Powered by the same FRED / Finnhub / FMP keys used in SavvyETF — fetched server-side so keys never hit the browser.
+          Context for physical-risk dashboards: fuel prices and green vs fossil tilts move transition narratives in real time.
+        </p>
+        <p class="markets-status" id="markets-status">Connecting…</p>
+      </div>
+
+      <div id="markets-signal" class="markets-signal"></div>
+
+      <h3 class="markets-subdir">Energy &amp; inflation (FRED)</h3>
+      <div class="markets-grid energy-grid" id="markets-energy"></div>
+
+      <h3 class="markets-subdir">Green vs fossil market tilts</h3>
+      <div class="markets-grid etf-grid" id="markets-etfs"></div>
+
+      <h3 class="markets-subdir">Recent company headlines (Finnhub)</h3>
+      <ul class="markets-news" id="markets-news"></ul>
+      <p class="table-note">Not investment advice. Series and quotes refresh on a ~15 min cache via the <code>/api/climate-markets</code> endpoint.</p>
     </section>
 
     <section class="section container" id="audience">

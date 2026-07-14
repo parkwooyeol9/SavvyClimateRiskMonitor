@@ -812,6 +812,238 @@ a {
   text-underline-offset: 3px;
 }
 
+.table-note code {
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+/* Live climate markets */
+.markets-status {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.markets-signal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.markets-signal p {
+  margin: 0.5rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.signal-meta {
+  font-size: 0.8rem !important;
+}
+
+.signal-pill {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.signal-good { background: var(--accent-dim); color: var(--accent); }
+.signal-warn { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+.signal-neutral { background: rgba(148, 163, 184, 0.12); color: var(--text-muted); }
+
+.markets-subdir {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.markets-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.energy-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.etf-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.mkt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.mkt-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.mkt-label,
+.mkt-symbol {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mkt-symbol {
+  color: var(--text);
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.mkt-name {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  line-height: 1.3;
+}
+
+.mkt-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.mkt-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mkt-delta {
+  font-size: 0.82rem;
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+}
+
+.mkt-delta.up { color: var(--accent); }
+.mkt-delta.down { color: var(--danger); }
+
+.mkt-date {
+  color: var(--text-muted);
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+}
+
+.spark {
+  width: 80px;
+  height: 28px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+.tilt-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.tilt-green .tilt-tag { background: var(--accent-dim); color: var(--accent); }
+.tilt-fossil .tilt-tag { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+.tilt-utility .tilt-tag { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
+
+.markets-news {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1rem 1.15rem;
+}
+
+.markets-news li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: baseline;
+  font-size: 0.88rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.markets-news li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.news-sym {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 2.5rem;
+}
+
+.markets-news a {
+  color: var(--text);
+}
+
+.markets-news a:hover {
+  color: var(--accent);
+}
+
+.news-src {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.markets-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
+}
+
+.markets-offline .markets-grid {
+  opacity: 0.55;
+}
+
+@media (max-width: 1100px) {
+  .energy-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .etf-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .energy-grid,
+  .etf-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .markets-news li {
+    grid-template-columns: auto 1fr;
+  }
+
+  .news-src {
+    grid-column: 2;
+  }
+}
+
 /* CTA */
 .cta {
   padding: 5rem 0;

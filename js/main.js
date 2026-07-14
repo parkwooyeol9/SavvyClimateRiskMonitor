@@ -1,4 +1,5 @@
 import { initDashboard } from "./dashboard.js";
+import { initClimateMarkets } from "./markets.js";
 
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = document.querySelector(".nav-links");
@@ -29,6 +30,7 @@ if (form && formMessage) {
 
 document.addEventListener("DOMContentLoaded", () => {
   initDashboard();
+  initClimateMarkets();
   requestAnimationFrame(() => {
     if (window.__crmMap) window.__crmMap.invalidateSize();
   });
