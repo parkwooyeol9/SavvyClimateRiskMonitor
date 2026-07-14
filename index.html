@@ -300,15 +300,47 @@
     <section class="section container" id="climate-markets">
       <div class="section-head">
         <p class="eyebrow">Live climate finance</p>
-        <h2>Energy prices, transition ETFs &amp; related news</h2>
+        <h2>Energy prices, transition ETFs &amp; charts</h2>
         <p class="section-sub">
-          Powered by the same FRED / Finnhub / FMP keys used in SavvyETF — fetched server-side so keys never hit the browser.
-          Context for physical-risk dashboards: fuel prices and green vs fossil tilts move transition narratives in real time.
+          Same pattern finance sites use: your browser never sees API keys. It calls our Vercel proxy;
+          the proxy uses FRED / Finnhub / FMP (from SavvyETF) and returns chart-ready JSON only.
         </p>
         <p class="markets-status" id="markets-status">Connecting…</p>
       </div>
 
+      <div class="arch-callout">
+        <strong>How keys stay safe</strong>
+        <span>Browser → <code>/api/climate-markets</code> → FRED/Finnhub/FMP → charts. Keys live only in Vercel env.</span>
+      </div>
+
       <div id="markets-signal" class="markets-signal"></div>
+
+      <div class="markets-charts" id="markets-charts" hidden>
+        <div class="dash-card chart-panel">
+          <div class="chart-toolbar">
+            <h3>Energy price history</h3>
+            <div class="range-toggles" role="group" aria-label="Energy chart range">
+              <button type="button" data-chart-range="energy" data-range="3M">3M</button>
+              <button type="button" data-chart-range="energy" data-range="6M">6M</button>
+              <button type="button" class="active" data-chart-range="energy" data-range="1Y">1Y</button>
+              <button type="button" data-chart-range="energy" data-range="MAX">Max</button>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-live"><canvas id="chart-energy"></canvas></div>
+        </div>
+        <div class="dash-card chart-panel">
+          <div class="chart-toolbar">
+            <h3>Green vs fossil (ICLN / XLE)</h3>
+            <div class="range-toggles" role="group" aria-label="Relative performance range">
+              <button type="button" data-chart-range="relative" data-range="3M">3M</button>
+              <button type="button" data-chart-range="relative" data-range="6M">6M</button>
+              <button type="button" class="active" data-chart-range="relative" data-range="1Y">1Y</button>
+              <button type="button" data-chart-range="relative" data-range="MAX">Max</button>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-live"><canvas id="chart-relative"></canvas></div>
+        </div>
+      </div>
 
       <h3 class="markets-subdir">Energy &amp; inflation (FRED)</h3>
       <div class="markets-grid energy-grid" id="markets-energy"></div>
@@ -318,7 +350,7 @@
 
       <h3 class="markets-subdir">Recent company headlines (Finnhub)</h3>
       <ul class="markets-news" id="markets-news"></ul>
-      <p class="table-note">Not investment advice. Series and quotes refresh on a ~15 min cache via the <code>/api/climate-markets</code> endpoint.</p>
+      <p class="table-note">Not investment advice. Data refreshes ~15 min via <code>/api/climate-markets</code> (secure proxy).</p>
     </section>
 
     <section class="section container" id="audience">
@@ -626,7 +658,11 @@
         </details>
         <details class="faq-item">
           <summary>Where do the live market numbers come from?</summary>
-          <p>Server-side Vercel functions call FRED (energy prices), Finnhub (ETF quotes + headlines), and FMP as fallback — reusing API keys from the SavvyETF project. Keys never ship to the browser.</p>
+          <p>Server-side Vercel functions call FRED (energy prices + history), Finnhub (ETF quotes, candles, headlines), and FMP as fallback — reusing API keys from the SavvyETF project. Keys never ship to the browser; charts only receive JSON.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Why not put the API key in the webpage JavaScript?</summary>
+          <p>Anyone can View Source and steal it, then burn your quota. Finance sites solve this the same way we do: a private backend key + a public chart endpoint.</p>
         </details>
         <details class="faq-item">
           <summary>Is SavvyClimateRiskMonitor.com available?</summary>

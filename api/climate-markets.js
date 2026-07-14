@@ -1,24 +1,31 @@
 /**
  * GET /api/climate-markets
- * Server-side only — uses FRED / Finnhub / FMP keys from env (never exposed to the browser).
- * Aggregates energy prices, transition-tilted ETF quotes, and climate-tagged market news.
+ * Browser ↔ this endpoint only. FRED / Finnhub / FMP keys stay on the server.
+ * Returns quotes, news, and chart-ready time series (same pattern as finance sites).
  */
 
 const FRED_SERIES = [
-  { id: "DCOILWTICO", label: "WTI crude oil", unit: "USD/bbl", theme: "energy" },
-  { id: "DHHNGSP", label: "Henry Hub natural gas", unit: "USD/MMBtu", theme: "energy" },
-  { id: "GASREGW", label: "US regular gasoline", unit: "USD/gal", theme: "energy" },
-  { id: "CPIENGSL", label: "CPI: energy", unit: "index", theme: "inflation" },
+  { id: "DCOILWTICO", label: "WTI crude oil", unit: "USD/bbl", theme: "energy", chart: true },
+  { id: "DHHNGSP", label: "Henry Hub natural gas", unit: "USD/MMBtu", theme: "energy", chart: true },
+  { id: "GASREGW", label: "US regular gasoline", unit: "USD/gal", theme: "energy", chart: false },
+  { id: "CPIENGSL", label: "CPI: energy", unit: "index", theme: "inflation", chart: false },
 ];
 
 const ETF_TICKERS = [
-  { symbol: "ICLN", name: "iShares Global Clean Energy", tilt: "green" },
-  { symbol: "TAN", name: "Invesco Solar ETF", tilt: "green" },
-  { symbol: "QCLN", name: "First Trust NASDAQ Clean Edge", tilt: "green" },
-  { symbol: "XLE", name: "Energy Select Sector SPDR", tilt: "fossil" },
-  { symbol: "XOP", name: "SPDR S&P Oil & Gas Exploration", tilt: "fossil" },
-  { symbol: "NEE", name: "NextEra Energy", tilt: "utility" },
+  { symbol: "ICLN", name: "iShares Global Clean Energy", tilt: "green", candle: true },
+  { symbol: "TAN", name: "Invesco Solar ETF", tilt: "green", candle: false },
+  { symbol: "QCLN", name: "First Trust NASDAQ Clean Edge", tilt: "green", candle: false },
+  { symbol: "XLE", name: "Energy Select Sector SPDR", tilt: "fossil", candle: true },
+  { symbol: "XOP", name: "SPDR S&P Oil & Gas Exploration", tilt: "fossil", candle: false },
+  { symbol: "NEE", name: "NextEra Energy", tilt: "utility", candle: false },
 ];
+
+const CHART_COLORS = {
+  DCOILWTICO: "#fbbf24",
+  DHHNGSP: "#38bdf8",
+  ICLN: "#2dd4a8",
+  XLE: "#f87171",
+};
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -28,26 +35,28 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function fetchJson(url, headers = {}) {
+async function fetchJson(url) {
   const r = await fetch(url, {
-    headers: { "User-Agent": "SavvyClimateRiskMonitor/1.0", ...headers },
+    headers: { "User-Agent": "SavvyClimateRiskMonitor/1.0" },
   });
   if (!r.ok) {
     const text = await r.text().catch(() => "");
-    throw new Error(`HTTP ${r.status} ${url.slice(0, 80)} ${text.slice(0, 120)}`);
+    throw new Error(`HTTP ${r.status}: ${text.slice(0, 120)}`);
   }
   return r.json();
 }
 
-function latestFredObs(observations) {
-  const usable = (observations || [])
+function parseFredObs(observations) {
+  return (observations || [])
     .filter((o) => o.value !== undefined && o.value !== null && o.value !== ".")
     .map((o) => ({ date: o.date, value: Number(o.value) }))
     .filter((o) => Number.isFinite(o.value));
+}
+
+function summarizeSeries(usable) {
   if (!usable.length) return null;
   const latest = usable[usable.length - 1];
   const prev = usable.length > 1 ? usable[usable.length - 2] : null;
-  const spark = usable.slice(-24).map((o) => o.value);
   return {
     date: latest.date,
     value: latest.value,
@@ -56,7 +65,11 @@ function latestFredObs(observations) {
       prev && prev.value !== 0
         ? ((latest.value - prev.value) / Math.abs(prev.value)) * 100
         : null,
-    spark,
+    spark: usable.slice(-24).map((o) => o.value),
+    history: {
+      labels: usable.map((o) => o.date),
+      values: usable.map((o) => o.value),
+    },
   };
 }
 
@@ -66,9 +79,9 @@ async function fetchFredSeries(apiKey, seriesId) {
   url.searchParams.set("api_key", apiKey);
   url.searchParams.set("file_type", "json");
   url.searchParams.set("sort_order", "asc");
-  url.searchParams.set("observation_start", "2022-01-01");
+  url.searchParams.set("observation_start", "2020-01-01");
   const data = await fetchJson(url.toString());
-  return latestFredObs(data.observations);
+  return summarizeSeries(parseFredObs(data.observations));
 }
 
 async function fetchFinnhubQuote(apiKey, symbol) {
@@ -85,12 +98,29 @@ async function fetchFinnhubQuote(apiKey, symbol) {
   };
 }
 
+async function fetchFinnhubCandles(apiKey, symbol, days = 365) {
+  const to = Math.floor(Date.now() / 1000);
+  const from = to - days * 24 * 60 * 60;
+  const url =
+    `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}` +
+    `&resolution=D&from=${from}&to=${to}&token=${apiKey}`;
+  const data = await fetchJson(url);
+  if (!data || data.s !== "ok" || !Array.isArray(data.t) || !data.t.length) return null;
+
+  const labels = data.t.map((ts) => new Date(ts * 1000).toISOString().slice(0, 10));
+  const closes = data.c.map(Number);
+  // Indexed performance (start = 100)
+  const base = closes[0] || 1;
+  const indexed = closes.map((c) => (c / base) * 100);
+
+  return { labels, values: closes, indexed };
+}
+
 async function fetchFinnhubNews(apiKey) {
   const today = new Date();
   const from = new Date(today);
   from.setDate(from.getDate() - 5);
   const fmt = (d) => d.toISOString().slice(0, 10);
-  // Company news for a clean-energy + energy basket (Finnhub free tier)
   const symbols = ["ICLN", "NEE", "XLE", "ENPH", "FSLR"];
   const results = [];
   for (const symbol of symbols) {
@@ -113,7 +143,6 @@ async function fetchFinnhubNews(apiKey) {
       /* skip */
     }
   }
-  // Prefer climate/energy-ish headlines
   const ranked = results
     .filter((n) => n.headline)
     .sort((a, b) => (b.datetime || 0) - (a.datetime || 0));
@@ -149,6 +178,25 @@ async function fetchFmpQuotes(apiKey, symbols) {
   } catch {
     return {};
   }
+}
+
+function alignIndexedSeries(seriesMap) {
+  // seriesMap: { ICLN: {labels, indexed}, XLE: {...} }
+  const keys = Object.keys(seriesMap);
+  if (!keys.length) return null;
+  const dateSet = new Set();
+  keys.forEach((k) => seriesMap[k].labels.forEach((d) => dateSet.add(d)));
+  const labels = [...dateSet].sort();
+  const datasets = {};
+  for (const k of keys) {
+    const lookup = new Map(seriesMap[k].labels.map((d, i) => [d, seriesMap[k].indexed[i]]));
+    let last = null;
+    datasets[k] = labels.map((d) => {
+      if (lookup.has(d)) last = lookup.get(d);
+      return last;
+    });
+  }
+  return { labels, datasets };
 }
 
 module.exports = async function handler(req, res) {
@@ -187,19 +235,39 @@ module.exports = async function handler(req, res) {
   const energy = [];
   const etfs = [];
   let news = [];
+  const charts = {
+    energy: null,
+    relative: null,
+  };
 
   if (fredKey) {
     await Promise.all(
       FRED_SERIES.map(async (s) => {
         try {
           const obs = await fetchFredSeries(fredKey, s.id);
-          if (obs) energy.push({ ...s, ...obs });
+          if (obs) energy.push({ ...s, ...obs, color: CHART_COLORS[s.id] || "#2dd4a8" });
         } catch (e) {
           errors.push(`FRED ${s.id}: ${e.message}`);
         }
       })
     );
+
+    const chartable = energy.filter((s) => s.chart && s.history?.labels?.length);
+    if (chartable.length) {
+      charts.energy = {
+        series: chartable.map((s) => ({
+          id: s.id,
+          label: s.label,
+          unit: s.unit,
+          color: s.color,
+          labels: s.history.labels,
+          values: s.history.values,
+        })),
+      };
+    }
   }
+
+  const candleMap = {};
 
   if (finnhubKey) {
     await Promise.all(
@@ -212,6 +280,18 @@ module.exports = async function handler(req, res) {
         }
       })
     );
+
+    await Promise.all(
+      ETF_TICKERS.filter((t) => t.candle).map(async (t) => {
+        try {
+          const candles = await fetchFinnhubCandles(finnhubKey, t.symbol, 400);
+          if (candles) candleMap[t.symbol] = candles;
+        } catch (e) {
+          errors.push(`Finnhub candle ${t.symbol}: ${e.message}`);
+        }
+      })
+    );
+
     try {
       news = await fetchFinnhubNews(finnhubKey);
     } catch (e) {
@@ -219,7 +299,6 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // Fill any missing ETF quotes via FMP
   if (fmpKey) {
     const missing = ETF_TICKERS.filter((t) => !etfs.find((e) => e.symbol === t.symbol)).map(
       (t) => t.symbol
@@ -242,7 +321,29 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // Simple green vs fossil relative signal (for UI)
+  if (Object.keys(candleMap).length) {
+    const aligned = alignIndexedSeries(
+      Object.fromEntries(
+        Object.entries(candleMap).map(([sym, c]) => [sym, { labels: c.labels, indexed: c.indexed }])
+      )
+    );
+    if (aligned) {
+      charts.relative = {
+        labels: aligned.labels,
+        series: Object.keys(aligned.datasets).map((sym) => {
+          const meta = ETF_TICKERS.find((t) => t.symbol === sym);
+          return {
+            symbol: sym,
+            label: meta?.name || sym,
+            tilt: meta?.tilt || "other",
+            color: CHART_COLORS[sym] || "#94a3b8",
+            values: aligned.datasets[sym],
+          };
+        }),
+      };
+    }
+  }
+
   const green = etfs.filter((e) => e.tilt === "green" && e.changePct != null);
   const fossil = etfs.filter((e) => e.tilt === "fossil" && e.changePct != null);
   const avg = (arr) =>
@@ -261,6 +362,7 @@ module.exports = async function handler(req, res) {
     energy,
     etfs,
     news,
+    charts,
     signal: {
       regime,
       greenAvgPct: greenAvg,

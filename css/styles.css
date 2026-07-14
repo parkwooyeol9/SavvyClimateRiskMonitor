@@ -1019,6 +1019,91 @@ a {
   opacity: 0.55;
 }
 
+.arch-callout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(45, 212, 168, 0.25);
+  border-radius: var(--radius);
+  background: rgba(45, 212, 168, 0.06);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.arch-callout strong {
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.arch-callout code {
+  color: var(--text);
+  font-size: 0.85em;
+}
+
+.markets-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.chart-panel {
+  padding: 1rem;
+}
+
+.chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-toolbar h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.range-toggles {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.range-toggles button {
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.range-toggles button:hover,
+.range-toggles button.active {
+  border-color: rgba(45, 212, 168, 0.45);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.chart-wrap-live {
+  height: 280px;
+}
+
+@media (max-width: 900px) {
+  .markets-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1100px) {
   .energy-grid {
     grid-template-columns: repeat(2, 1fr);
