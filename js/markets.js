@@ -331,8 +331,8 @@ export async function initClimateMarkets() {
   bindRangeToggles();
 
   try {
-    if (status) status.textContent = "Loading live market data…";
-    const res = await fetch("/api/climate-markets");
+    if (status) status.textContent = "Fetching live market data…";
+    const res = await fetch(`/api/climate-markets?t=${Date.now()}`);
     const data = await res.json();
 
     if (!res.ok) {

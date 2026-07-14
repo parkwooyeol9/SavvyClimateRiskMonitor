@@ -192,10 +192,10 @@ export async function initEuropeHeat() {
   const root = $("#europe-heat");
   if (!root) return;
   const status = $("#heat-status");
+  if (status) status.textContent = "Fetching live European temperatures…";
 
   try {
-    if (status) status.textContent = "Loading Europe heat watch…";
-    const res = await fetch("/api/europe-heat");
+    const res = await fetch(`/api/europe-heat?t=${Date.now()}`);
     const data = await res.json();
     if (!res.ok) {
       if (status) status.textContent = data.error || "Heat API unavailable";

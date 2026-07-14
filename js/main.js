@@ -29,11 +29,34 @@ if (form && formMessage) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  initDashboard();
-  initClimateMarkets();
-  initEuropeHeat();
+function boot() {
+  try {
+    initDashboard();
+  } catch (e) {
+    console.error("dashboard init failed", e);
+  }
+  try {
+    initClimateMarkets();
+  } catch (e) {
+    console.error("markets init failed", e);
+    const s = document.getElementById("markets-status");
+    if (s) s.textContent = "Markets failed to load — try hard-refresh (Cmd+Shift+R).";
+  }
+  try {
+    initEuropeHeat();
+  } catch (e) {
+    console.error("europe heat init failed", e);
+    const s = document.getElementById("heat-status");
+    if (s) s.textContent = "Heat watch failed to load — try hard-refresh (Cmd+Shift+R).";
+  }
   requestAnimationFrame(() => {
     if (window.__crmMap) window.__crmMap.invalidateSize();
   });
-});
+}
+
+// Module scripts can miss DOMContentLoaded if it already fired — always boot.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}

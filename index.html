@@ -308,11 +308,56 @@
             with <strong>live city temperatures</strong> and year-ago comparisons so you can track ongoing heat risk —
             the physical-risk channel that hits people first, then assets and disclosures.
           </p>
-          <p class="markets-status" id="heat-status">Connecting…</p>
+          <p class="markets-status" id="heat-status">Loading live weather…</p>
         </div>
 
-        <div id="heat-mortality" class="heat-mortality"></div>
-        <div id="heat-summary" class="heat-summary"></div>
+        <div id="heat-mortality" class="heat-mortality">
+          <div class="mortality-hero">
+            <p class="mortality-asof">Situation brief · updated 2026-07-13</p>
+            <h3>Europe reported ~10,650 excess deaths in the peak heat week (22–28 Jun 2026)</h3>
+            <p class="mortality-def">All-cause excess mortality vs baseline (EuroMOMO) — not a live per-certificate “heat death” counter. Figures may be revised.</p>
+          </div>
+          <div class="mortality-grid">
+            <article class="mortality-card">
+              <span class="mortality-label">EuroMOMO excess (peak week)</span>
+              <span class="mortality-value">10,650</span>
+              <span class="mortality-sub">Week of 22–28 Jun 2026</span>
+            </article>
+            <article class="mortality-card">
+              <span class="mortality-label">Of which age 65+</span>
+              <span class="mortality-value">&gt;9,000</span>
+              <span class="mortality-sub">Vast majority of excess deaths</span>
+            </article>
+            <article class="mortality-card">
+              <span class="mortality-label">England &amp; Wales heat-related</span>
+              <span class="mortality-value">~2,700</span>
+              <span class="mortality-sub">May–June 2026 · study estimate</span>
+            </article>
+            <article class="mortality-card">
+              <span class="mortality-label">Climate attribution</span>
+              <span class="mortality-value soft">≈3–4°C warmer</span>
+              <span class="mortality-sub">Extra heat from human-caused warming (study reporting)</span>
+            </article>
+          </div>
+          <div class="mortality-tags">
+            <span>Very high excess: France, Belgium</span>
+            <span>Moderate excess: Spain, Netherlands, Switzerland</span>
+          </div>
+          <p class="mortality-sources">
+            Sources:
+            <a href="https://www.euromomo.eu/" target="_blank" rel="noopener noreferrer">EuroMOMO</a>
+            ·
+            <a href="https://www.euronews.com/my-europe/2026/07/13/europe-records-10000-excess-deaths-during-june-heatwaves-new-data-shows" target="_blank" rel="noopener noreferrer">Euronews (13 Jul 2026)</a>
+          </p>
+          <p class="mortality-disclaimer">Mortality figures are published estimates. Live city temperatures load below via Open-Meteo.</p>
+        </div>
+        <div id="heat-summary" class="heat-summary">
+          <div class="heat-kpi"><span>Cities tracked</span><strong>8</strong></div>
+          <div class="heat-kpi"><span>Live board</span><strong>loading…</strong></div>
+          <div class="heat-kpi"><span>Data</span><strong>Open-Meteo</strong></div>
+          <div class="heat-kpi"><span>Portfolio</span><strong>EU assets</strong></div>
+          <p class="heat-risk-note">Extreme heat is an acute physical risk for European assets — cooling demand, labor productivity, and mortality-sensitive operations.</p>
+        </div>
 
         <h3 class="markets-subdir">Live city heat board</h3>
         <div class="heat-city-board" id="heat-city-board"></div>
@@ -344,7 +389,7 @@
           Same pattern finance sites use: your browser never sees API keys. It calls our Vercel proxy;
           the proxy uses FRED / Finnhub / FMP (from SavvyETF) and returns chart-ready JSON only.
         </p>
-        <p class="markets-status" id="markets-status">Connecting…</p>
+        <p class="markets-status" id="markets-status">Loading live market data…</p>
       </div>
 
       <div class="arch-callout">
@@ -749,6 +794,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=20260714b"></script>
 </body>
 </html>
