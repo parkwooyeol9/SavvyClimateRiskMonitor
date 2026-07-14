@@ -155,6 +155,19 @@ async function fetchCityHeat(city) {
   };
 }
 
+async function mapPool(items, concurrency, fn) {
+  const results = [];
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  return results;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
@@ -171,15 +184,24 @@ module.exports = async function handler(req, res) {
   const errors = [];
   const cities = [];
 
-  await Promise.all(
-    CITIES.map(async (c) => {
-      try {
-        cities.push(await fetchCityHeat(c));
-      } catch (e) {
-        errors.push(`${c.name}: ${e.message}`);
+  await mapPool(CITIES, 2, async (c) => {
+    try {
+      cities.push(await fetchCityHeat(c));
+    } catch (e) {
+      // One retry after short wait on rate limit
+      if (String(e.message).includes("429")) {
+        await new Promise((r) => setTimeout(r, 800));
+        try {
+          cities.push(await fetchCityHeat(c));
+          return;
+        } catch (e2) {
+          errors.push(`${c.name}: ${e2.message}`);
+          return;
+        }
       }
-    })
-  );
+      errors.push(`${c.name}: ${e.message}`);
+    }
+  });
 
   cities.sort((a, b) => (b.latest?.tmax ?? -99) - (a.latest?.tmax ?? -99));
 
