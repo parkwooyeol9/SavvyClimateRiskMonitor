@@ -44,6 +44,7 @@ Open **http://localhost:8081** (ES modules require a local server; `file://` wil
 ```
 climate-risk-monitor/
 ├── index.html          # Landing page + dashboard shell
+├── vercel.json         # Vercel static deploy config
 ├── css/styles.css      # Styles
 ├── js/
 │   ├── data.js         # Demo portfolio + scenario engine
@@ -56,19 +57,36 @@ climate-risk-monitor/
 
 Static HTML, CSS, vanilla JS (ES modules). CDN: Leaflet, Chart.js, Google Fonts. No build step, no API keys required for the demo.
 
-## Deploy (when ready)
+## Deploy (Vercel)
 
-1. Push to GitHub
-2. Connect to [Vercel](https://vercel.com) or [Netlify](https://netlify.com) (free)
-3. Point `SavvyClimateRiskMonitor.com` DNS to the host
+Config: [`vercel.json`](./vercel.json) — static site, no build step, security + cache headers.
 
-## Roadmap
+### Option A — GitHub (recommended)
 
-See [Development recommendations](#development-recommendations) in issues or project board.
+1. Push this repo to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new) → Import the repo
+3. Framework Preset: **Other** · Build Command: leave empty · Output Directory: `.` (root)
+4. Deploy — you get a `*.vercel.app` URL
+
+Custom domain (`SavvyClimateRiskMonitor.com`):
+
+1. Vercel project → **Settings → Domains** → add the domain
+2. At your registrar, set DNS as Vercel shows (usually `A` / `CNAME`)
+3. Wait for SSL (often a few minutes)
+
+### Option B — Vercel CLI
+
+```bash
+npm i -g vercel
+cd climate-risk-monitor
+vercel          # preview
+vercel --prod   # production
+```
 
 ### Phase 1 — Ship the demo
-- [ ] GitHub repo + CI (lint HTML, deploy preview)
-- [ ] Vercel/Netlify deploy + custom domain
+- [x] Vercel deploy config (`vercel.json`)
+- [ ] GitHub repo + push
+- [ ] Vercel project + custom domain
 - [ ] Waitlist backend (Formspree or Resend)
 
 ### Phase 2 — Real data
