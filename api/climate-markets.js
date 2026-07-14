@@ -98,6 +98,48 @@ async function fetchFinnhubQuote(apiKey, symbol) {
   };
 }
 
+async function fetchFmpHistory(apiKey, symbol, limit = 400) {
+  if (!apiKey) return null;
+  const candidates = [
+    `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`,
+    `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(symbol)}?timeseries=${limit}&apikey=${apiKey}`,
+  ];
+
+  for (const url of candidates) {
+    try {
+      const data = await fetchJson(url);
+      let rows = [];
+      if (Array.isArray(data)) rows = data;
+      else if (Array.isArray(data?.historical)) rows = data.historical;
+      if (!rows.length) continue;
+
+      // FMP returns newest-first usually
+      const sorted = [...rows]
+        .map((r) => ({
+          date: r.date || (r.datetime ? String(r.datetime).slice(0, 10) : null),
+          close: Number(r.close ?? r.adjClose ?? r.price),
+        }))
+        .filter((r) => r.date && Number.isFinite(r.close))
+        .sort((a, b) => (a.date < b.date ? -1 : 1));
+
+      if (!sorted.length) continue;
+      const slice = sorted.slice(-limit);
+      const labels = slice.map((r) => r.date);
+      const closes = slice.map((r) => r.close);
+      const base = closes[0] || 1;
+      return {
+        labels,
+        values: closes,
+        indexed: closes.map((c) => (c / base) * 100),
+        source: "fmp",
+      };
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
+
 async function fetchFinnhubCandles(apiKey, symbol, days = 365) {
   const to = Math.floor(Date.now() / 1000);
   const from = to - days * 24 * 60 * 60;
@@ -109,11 +151,10 @@ async function fetchFinnhubCandles(apiKey, symbol, days = 365) {
 
   const labels = data.t.map((ts) => new Date(ts * 1000).toISOString().slice(0, 10));
   const closes = data.c.map(Number);
-  // Indexed performance (start = 100)
   const base = closes[0] || 1;
   const indexed = closes.map((c) => (c / base) * 100);
 
-  return { labels, values: closes, indexed };
+  return { labels, values: closes, indexed, source: "finnhub" };
 }
 
 async function fetchFinnhubNews(apiKey) {
@@ -268,6 +309,7 @@ module.exports = async function handler(req, res) {
   }
 
   const candleMap = {};
+  const candleSymbols = ETF_TICKERS.filter((t) => t.candle).map((t) => t.symbol);
 
   if (finnhubKey) {
     await Promise.all(
@@ -282,12 +324,12 @@ module.exports = async function handler(req, res) {
     );
 
     await Promise.all(
-      ETF_TICKERS.filter((t) => t.candle).map(async (t) => {
+      candleSymbols.map(async (symbol) => {
         try {
-          const candles = await fetchFinnhubCandles(finnhubKey, t.symbol, 400);
-          if (candles) candleMap[t.symbol] = candles;
+          const candles = await fetchFinnhubCandles(finnhubKey, symbol, 400);
+          if (candles) candleMap[symbol] = candles;
         } catch (e) {
-          errors.push(`Finnhub candle ${t.symbol}: ${e.message}`);
+          errors.push(`Finnhub candle ${symbol}: ${e.message}`);
         }
       })
     );
@@ -297,6 +339,22 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       errors.push(`Finnhub news: ${e.message}`);
     }
+  }
+
+  // FMP historical fallback when Finnhub candles are restricted (common on free tier)
+  if (fmpKey) {
+    await Promise.all(
+      candleSymbols
+        .filter((symbol) => !candleMap[symbol])
+        .map(async (symbol) => {
+          try {
+            const hist = await fetchFmpHistory(fmpKey, symbol, 400);
+            if (hist) candleMap[symbol] = hist;
+          } catch (e) {
+            errors.push(`FMP history ${symbol}: ${e.message}`);
+          }
+        })
+    );
   }
 
   if (fmpKey) {
