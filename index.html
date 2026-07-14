@@ -22,6 +22,7 @@
       </a>
       <div class="nav-links">
         <a href="#app-dashboard">Dashboard</a>
+        <a href="#europe-heat">Europe heat</a>
         <a href="#climate-markets">Markets</a>
         <a href="#audience">Who it's for</a>
         <a href="#methodology">Methodology</a>
@@ -294,6 +295,44 @@
           <strong>&lt;2 min</strong>
           <span>Per-location assessment</span>
         </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="europe-heat">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">Situation watch · Western Europe</p>
+          <h2>Extreme heat &amp; excess mortality</h2>
+          <p class="section-sub">
+            Late-June 2026 heatwaves drove a sharp mortality spike (EuroMOMO). This panel pairs that published snapshot
+            with <strong>live city temperatures</strong> and year-ago comparisons so you can track ongoing heat risk —
+            the physical-risk channel that hits people first, then assets and disclosures.
+          </p>
+          <p class="markets-status" id="heat-status">Connecting…</p>
+        </div>
+
+        <div id="heat-mortality" class="heat-mortality"></div>
+        <div id="heat-summary" class="heat-summary"></div>
+
+        <h3 class="markets-subdir">Live city heat board</h3>
+        <div class="heat-city-board" id="heat-city-board"></div>
+
+        <div class="dash-card chart-panel" id="heat-chart-panel" hidden>
+          <div class="chart-wrap chart-wrap-live"><canvas id="chart-europe-heat"></canvas></div>
+          <p class="table-note">Source: Open-Meteo (forecast + last-year archive window). Anomaly = recent 7-day avg max minus same calendar window last year.</p>
+        </div>
+
+        <div class="heat-improve">
+          <h3>What this adds — and what to build next</h3>
+          <ul>
+            <li><strong>Now:</strong> sourced excess-death brief + live °C board + anomaly vs last year + link to EU portfolio assets.</li>
+            <li><strong>Next:</strong> wire EuroMOMO / national HSA excess series when APIs or weekly CSV drops are available (still lag official counts).</li>
+            <li><strong>Next:</strong> wet-bulb / heat-index maps and “cooling degree day” overlays for industrial sites.</li>
+            <li><strong>Next:</strong> alert thresholds that email when a monitored city crosses 35°C / 40°C.</li>
+          </ul>
+        </div>
+
+        <div id="heat-asset-link" class="heat-asset-link"></div>
       </div>
     </section>
 
@@ -655,6 +694,10 @@
         <details class="faq-item">
           <summary>SSP2-4.5 vs SSP5-8.5 — which should I use?</summary>
           <p>SSP2-4.5 is a middle-of-the-road pathway; SSP5-8.5 is a high-emissions stress. Compare both in the dashboard — boards often want the gap, not a single number.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Are the Europe death numbers counted live on this site?</summary>
+          <p>No. EuroMOMO and research estimates arrive with lag and revisions. We show a <em>dated snapshot</em> (as of mid-July 2026 reporting) plus live weather for situational awareness. Official heat-death tallies from agencies can take weeks.</p>
         </details>
         <details class="faq-item">
           <summary>Where do the live market numbers come from?</summary>

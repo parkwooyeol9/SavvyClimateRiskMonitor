@@ -1,5 +1,6 @@
 import { initDashboard } from "./dashboard.js";
 import { initClimateMarkets } from "./markets.js";
+import { initEuropeHeat } from "./europe-heat.js";
 
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = document.querySelector(".nav-links");
@@ -31,6 +32,7 @@ if (form && formMessage) {
 document.addEventListener("DOMContentLoaded", () => {
   initDashboard();
   initClimateMarkets();
+  initEuropeHeat();
   requestAnimationFrame(() => {
     if (window.__crmMap) window.__crmMap.invalidateSize();
   });
