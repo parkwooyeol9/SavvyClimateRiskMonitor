@@ -409,6 +409,12 @@ a {
   gap: 1.25rem;
 }
 
+.card-grid.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
 .feature-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -625,6 +631,187 @@ a {
   font-size: 0.95rem;
 }
 
+/* Audience / insights / methodology / FAQ */
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1.5rem;
+}
+
+.insight-region {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+
+.insight-card h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.insight-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.method-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1.35rem;
+}
+
+.method-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.method-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.method-callout {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1.5rem 1.75rem;
+}
+
+.method-callout h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.method-callout ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.method-callout li {
+  margin-bottom: 0.5rem;
+}
+
+.method-callout li:last-child {
+  margin-bottom: 0;
+}
+
+.method-callout strong {
+  color: var(--text);
+}
+
+.disclosure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.disclosure-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1.35rem;
+}
+
+.disclosure-item h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.disclosure-item p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.disclosure-badges {
+  margin: 0;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 720px;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "+";
+  float: right;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.faq-item[open] summary::after {
+  content: "–";
+}
+
+.faq-item p {
+  margin: 0.75rem 0 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.faq-item code {
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+.cta-fine {
+  margin-top: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.table-note a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* CTA */
 .cta {
   padding: 5rem 0;
@@ -723,7 +910,14 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .card-grid.two-col {
+  .card-grid.two-col,
+  .card-grid.three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-grid,
+  .method-grid,
+  .disclosure-grid {
     grid-template-columns: 1fr;
   }
 
