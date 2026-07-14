@@ -866,36 +866,67 @@ a {
 }
 
 .energy-grid {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.55rem;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
-.energy-grid .mkt-card {
-  padding: 0.7rem 0.8rem;
+.fred-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
 }
 
-.energy-grid .mkt-label {
-  font-size: 0.68rem;
-  max-width: 70%;
-  line-height: 1.25;
+.fred-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
 }
 
-.energy-grid .mkt-value {
-  font-size: 1.1rem;
+.fred-table th,
+.fred-table td {
+  padding: 0.55rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
 }
 
-.energy-grid .spark {
-  width: 56px;
-  height: 20px;
-  flex-shrink: 0;
+.fred-table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.15);
 }
 
-.energy-grid .mkt-delta {
-  font-size: 0.72rem;
+.fred-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fred-unit {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.fred-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fred-num.up { color: var(--accent); }
+.fred-num.down { color: var(--danger); }
+
+.fred-date {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .etf-grid {
+  display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
 }
 
 .mkt-card {
@@ -1125,14 +1156,20 @@ a {
 }
 
 .chart-wrap-live {
-  height: 200px;
-  max-height: 200px;
+  height: 180px !important;
+  max-height: 180px !important;
+  min-height: 180px;
   position: relative;
+  width: 100%;
+  overflow: hidden;
 }
 
 .chart-wrap-live canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 180px !important;
   max-width: 100% !important;
-  max-height: 200px !important;
+  max-height: 180px !important;
 }
 
 @media (max-width: 900px) {
@@ -1143,7 +1180,7 @@ a {
 
 @media (max-width: 1100px) {
   .energy-grid {
-    grid-template-columns: repeat(2, 1fr);
+    /* table wraps via overflow */
   }
 
   .etf-grid {
@@ -1152,7 +1189,6 @@ a {
 }
 
 @media (max-width: 600px) {
-  .energy-grid,
   .etf-grid {
     grid-template-columns: 1fr;
   }

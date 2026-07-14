@@ -30,23 +30,6 @@ function pctClass(n) {
   return Number(n) >= 0 ? "up" : "down";
 }
 
-function sparkSvg(values) {
-  if (!values?.length) return "";
-  const w = 80;
-  const h = 28;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const pts = values
-    .map((v, i) => {
-      const x = (i / (values.length - 1 || 1)) * w;
-      const y = h - ((v - min) / span) * (h - 4) - 2;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="${pts}"/></svg>`;
-}
-
 function regimeLabel(regime) {
   if (regime === "green_outperform") return { text: "Green tilts ahead", level: "good" };
   if (regime === "fossil_outperform") return { text: "Fossil tilts ahead", level: "warn" };
@@ -67,6 +50,24 @@ function sliceByRange(labels, values, rangeKey) {
   };
 }
 
+function downsample(labels, values, maxPoints = 90) {
+  if (!labels?.length || labels.length <= maxPoints) {
+    return { labels, values };
+  }
+  const step = Math.ceil(labels.length / maxPoints);
+  const outL = [];
+  const outV = [];
+  for (let i = 0; i < labels.length; i += step) {
+    outL.push(labels[i]);
+    outV.push(values[i]);
+  }
+  if (outL[outL.length - 1] !== labels[labels.length - 1]) {
+    outL.push(labels[labels.length - 1]);
+    outV.push(values[values.length - 1]);
+  }
+  return { labels: outL, values: outV };
+}
+
 function chartDefaults() {
   if (typeof Chart === "undefined") return;
   Chart.defaults.color = "#8fa3b8";
@@ -79,50 +80,30 @@ function destroyChart(chart) {
   return null;
 }
 
-function downsample(labels, values, maxPoints = 120) {
-  if (!labels?.length || labels.length <= maxPoints) {
-    return { labels, values };
-  }
-  const step = Math.ceil(labels.length / maxPoints);
-  const outL = [];
-  const outV = [];
-  for (let i = 0; i < labels.length; i += step) {
-    outL.push(labels[i]);
-    outV.push(values[i]);
-  }
-  // always keep last point
-  if (outL[outL.length - 1] !== labels[labels.length - 1]) {
-    outL.push(labels[labels.length - 1]);
-    outV.push(values[values.length - 1]);
-  }
-  return { labels: outL, values: outV };
+function chartOptsBase() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: { padding: { top: 4, right: 8, bottom: 0, left: 4 } },
+    interaction: { mode: "index", intersect: false },
+  };
 }
 
 function renderEnergyChart() {
   const canvas = $("#chart-energy");
   if (!canvas || typeof Chart === "undefined" || !marketsData?.charts?.energy) return;
 
+  // Prefer WTI only — dual-axis oil+gas looks broken/oversized on one panel
   const series = marketsData.charts.energy.series || [];
-  if (!series.length) return;
+  const primary =
+    series.find((s) => s.id === "DCOILWTICO") || series[0];
+  if (!primary) return;
 
   energyChart = destroyChart(energyChart);
 
-  const primary = series[0];
-  const secondary = series[1];
   let p = sliceByRange(primary.labels, primary.values, energyRange);
-  p = downsample(p.labels, p.values, 100);
-
-  let secondaryAligned = null;
-  if (secondary) {
-    const s = sliceByRange(secondary.labels, secondary.values, energyRange);
-    const map = new Map(s.labels.map((d, i) => [d, s.values[i]]));
-    let last = null;
-    const fullAligned = p.labels.map((d) => {
-      if (map.has(d)) last = map.get(d);
-      return last;
-    });
-    secondaryAligned = fullAligned;
-  }
+  p = downsample(p.labels, p.values, 80);
 
   energyChart = new Chart(canvas, {
     type: "line",
@@ -130,75 +111,50 @@ function renderEnergyChart() {
       labels: p.labels,
       datasets: [
         {
-          label: `${primary.label}`,
+          label: `${primary.label} (${primary.unit})`,
           data: p.values,
-          borderColor: primary.color,
-          backgroundColor: `${primary.color}14`,
-          borderWidth: 1.75,
+          borderColor: primary.color || "#fbbf24",
+          backgroundColor: "rgba(251,191,36,0.12)",
+          borderWidth: 2,
           pointRadius: 0,
           tension: 0.2,
           fill: true,
-          yAxisID: "y",
         },
-        secondary && secondaryAligned
-          ? {
-              label: `${secondary.label}`,
-              data: secondaryAligned,
-              borderColor: secondary.color,
-              borderWidth: 1.75,
-              pointRadius: 0,
-              tension: 0.2,
-              fill: false,
-              yAxisID: "y1",
-            }
-          : null,
-      ].filter(Boolean),
+      ],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: 0 },
-      interaction: { mode: "index", intersect: false },
+      ...chartOptsBase(),
       plugins: {
-        legend: {
-          position: "top",
-          labels: { boxWidth: 8, boxHeight: 8, font: { size: 10 }, padding: 8 },
-        },
+        legend: { display: false },
         title: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${fmtNum(ctx.parsed.y)} ${primary.unit || ""}`,
+          },
+        },
       },
       scales: {
         x: {
           ticks: {
-            maxTicksLimit: 5,
-            font: { size: 10 },
+            maxTicksLimit: 4,
+            font: { size: 9 },
+            autoSkip: true,
+            maxRotation: 0,
             callback(v) {
               const l = this.getLabelForValue(v);
-              return l?.slice?.(2, 7) || l;
+              return typeof l === "string" ? l.slice(2, 7) : l;
             },
           },
-          title: { display: false },
           grid: { display: false },
         },
         y: {
-          position: "left",
-          ticks: { maxTicksLimit: 5, font: { size: 10 } },
+          ticks: { maxTicksLimit: 4, font: { size: 9 } },
           title: {
             display: true,
-            text: primary.unit,
-            font: { size: 10 },
+            text: primary.unit || "USD",
+            font: { size: 9 },
           },
           grid: { color: "rgba(148,163,184,0.08)" },
-        },
-        y1: {
-          position: "right",
-          display: Boolean(secondary),
-          ticks: { maxTicksLimit: 5, font: { size: 10 } },
-          title: {
-            display: Boolean(secondary),
-            text: secondary?.unit || "",
-            font: { size: 10 },
-          },
-          grid: { drawOnChartArea: false },
         },
       },
     },
@@ -211,10 +167,15 @@ function renderRelativeChart() {
 
   relativeChart = destroyChart(relativeChart);
   const { labels, series } = marketsData.charts.relative;
-  const slicedLabels = sliceByRange(labels, labels, relativeRange).labels;
+  const sliced = sliceByRange(labels, labels, relativeRange);
+  const slicedLabels = sliced.labels;
   const startIdx = labels.length - slicedLabels.length;
 
-  const sampledMeta = downsample(slicedLabels, slicedLabels.map((_, i) => i), 100);
+  const sampledMeta = downsample(
+    slicedLabels,
+    slicedLabels.map((_, i) => i),
+    80
+  );
   const chartLabels = sampledMeta.labels;
   const pickIdx = sampledMeta.values;
 
@@ -224,10 +185,10 @@ function renderRelativeChart() {
     const first = picked.find((v) => v != null && Number.isFinite(v));
     const base = first || 100;
     return {
-      label: `${s.symbol}`,
+      label: s.symbol,
       data: picked.map((v) => (v == null ? null : (v / base) * 100)),
       borderColor: s.color,
-      borderWidth: 1.75,
+      borderWidth: 2,
       pointRadius: 0,
       tension: 0.2,
       fill: false,
@@ -236,19 +197,13 @@ function renderRelativeChart() {
 
   relativeChart = new Chart(canvas, {
     type: "line",
-    data: {
-      labels: chartLabels,
-      datasets,
-    },
+    data: { labels: chartLabels, datasets },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: 0 },
-      interaction: { mode: "index", intersect: false },
+      ...chartOptsBase(),
       plugins: {
         legend: {
           position: "top",
-          labels: { boxWidth: 8, boxHeight: 8, font: { size: 10 }, padding: 8 },
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 9 }, padding: 6 },
         },
         title: { display: false },
         tooltip: {
@@ -260,22 +215,23 @@ function renderRelativeChart() {
       scales: {
         x: {
           ticks: {
-            maxTicksLimit: 5,
-            font: { size: 10 },
+            maxTicksLimit: 4,
+            font: { size: 9 },
+            autoSkip: true,
+            maxRotation: 0,
             callback(v) {
               const l = this.getLabelForValue(v);
-              return l?.slice?.(2, 7) || l;
+              return typeof l === "string" ? l.slice(2, 7) : l;
             },
           },
-          title: { display: false },
           grid: { display: false },
         },
         y: {
-          ticks: { maxTicksLimit: 5, font: { size: 10 } },
+          ticks: { maxTicksLimit: 4, font: { size: 9 } },
           title: {
             display: true,
-            text: "Index (100 = start)",
-            font: { size: 10 },
+            text: "Index 100",
+            font: { size: 9 },
           },
           grid: { color: "rgba(148,163,184,0.08)" },
         },
@@ -318,19 +274,26 @@ function renderCards(data) {
     `;
   }
 
+  // Compact table — no sparklines (they were blowing layout on some browsers)
   if (energyEl) {
-    energyEl.innerHTML = (data.energy || [])
-      .map(
-        (s) => `<article class="mkt-card">
-          <div class="mkt-card-top">
-            <span class="mkt-label">${s.label}</span>
-            ${sparkSvg(s.spark)}
-          </div>
-          <div class="mkt-value">${fmtNum(s.value)} <span class="mkt-unit">${s.unit || ""}</span></div>
-          <div class="mkt-delta ${pctClass(s.changePct)}">${fmtPct(s.changePct)} <span class="mkt-date">${s.date || ""}</span></div>
-        </article>`
-      )
-      .join("") || `<p class="markets-empty">No FRED energy series returned.</p>`;
+    const rows = data.energy || [];
+    energyEl.innerHTML = rows.length
+      ? `<div class="fred-table-wrap"><table class="fred-table">
+          <thead><tr><th>Series</th><th>Latest</th><th>Δ</th><th>As of</th></tr></thead>
+          <tbody>
+            ${rows
+              .map(
+                (s) => `<tr>
+                  <td>${s.label}<div class="fred-unit">${s.unit || ""}</div></td>
+                  <td class="fred-num">${fmtNum(s.value)}</td>
+                  <td class="fred-num ${pctClass(s.changePct)}">${fmtPct(s.changePct)}</td>
+                  <td class="fred-date">${s.date || ""}</td>
+                </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table></div>`
+      : `<p class="markets-empty">No FRED energy series returned.</p>`;
   }
 
   if (etfEl) {
@@ -403,12 +366,21 @@ export async function initClimateMarkets() {
     }
 
     renderCards(data);
-    renderEnergyChart();
-    renderRelativeChart();
 
+    // IMPORTANT: unhide first, then draw — Chart.js mis-sizes inside [hidden]
     const chartsBlock = $("#markets-charts");
+    const hasCharts = Boolean(data.charts?.energy || data.charts?.relative);
     if (chartsBlock) {
-      chartsBlock.hidden = !(data.charts?.energy || data.charts?.relative);
+      chartsBlock.hidden = !hasCharts;
+    }
+
+    if (hasCharts) {
+      requestAnimationFrame(() => {
+        renderEnergyChart();
+        renderRelativeChart();
+        energyChart?.resize?.();
+        relativeChart?.resize?.();
+      });
     }
   } catch (err) {
     if (status) {

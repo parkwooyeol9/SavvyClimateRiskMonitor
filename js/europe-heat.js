@@ -215,11 +215,15 @@ export async function initEuropeHeat() {
     renderMortality(data.mortality);
     renderSummary(data.summary, data.riskNote);
     renderCityBoard(data.cities);
-    renderCityChart(data.cities);
     highlightEuAssets();
 
     const charts = $("#heat-chart-panel");
-    if (charts) charts.hidden = !(data.cities && data.cities.length);
+    if (charts) {
+      charts.hidden = !(data.cities && data.cities.length);
+      if (!charts.hidden) {
+        requestAnimationFrame(() => renderCityChart(data.cities));
+      }
+    }
   } catch (err) {
     if (status) status.textContent = `Could not load Europe heat watch (${err.message})`;
   }

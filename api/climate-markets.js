@@ -337,25 +337,68 @@ module.exports = async function handler(req, res) {
       FRED_SERIES.map(async (s) => {
         try {
           const obs = await fetchFredSeries(fredKey, s.id);
-          if (obs) energy.push({ ...s, ...obs, color: CHART_COLORS[s.id] || "#2dd4a8" });
+          if (!obs) return;
+          const { history, ...rest } = obs;
+          energy.push({
+            ...s,
+            ...rest,
+            color: CHART_COLORS[s.id] || "#2dd4a8",
+          });
+          if (s.chart && history?.labels?.length) {
+            // stash privately for chart pack — stripped before response
+            energy[energy.length - 1].__hist = history;
+          }
         } catch (e) {
           errors.push(`FRED ${s.id}: ${e.message}`);
         }
       })
     );
 
-    const chartable = energy.filter((s) => s.chart && s.history?.labels?.length);
+    const chartable = energy.filter((s) => s.__hist?.labels?.length);
     if (chartable.length) {
       charts.energy = {
-        series: chartable.map((s) => ({
-          id: s.id,
-          label: s.label,
-          unit: s.unit,
-          color: s.color,
-          labels: s.history.labels,
-          values: s.history.values,
-        })),
+        series: chartable.map((s) => {
+          const labels = s.__hist.labels;
+          const values = s.__hist.values;
+          // Cap points server-side so clients never draw 1600+ categories
+          const maxPts = 180;
+          if (labels.length <= maxPts) {
+            return {
+              id: s.id,
+              label: s.label,
+              unit: s.unit,
+              color: s.color,
+              labels,
+              values,
+            };
+          }
+          const step = Math.ceil(labels.length / maxPts);
+          const outL = [];
+          const outV = [];
+          for (let i = 0; i < labels.length; i += step) {
+            outL.push(labels[i]);
+            outV.push(values[i]);
+          }
+          if (outL[outL.length - 1] !== labels[labels.length - 1]) {
+            outL.push(labels[labels.length - 1]);
+            outV.push(values[values.length - 1]);
+          }
+          return {
+            id: s.id,
+            label: s.label,
+            unit: s.unit,
+            color: s.color,
+            labels: outL,
+            values: outV,
+          };
+        }),
       };
+    }
+
+    // Remove private history fields from card payload
+    for (const row of energy) {
+      delete row.__hist;
+      delete row.history;
     }
   }
 
