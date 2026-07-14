@@ -625,6 +625,10 @@
           <p>SSP2-4.5 is a middle-of-the-road pathway; SSP5-8.5 is a high-emissions stress. Compare both in the dashboard — boards often want the gap, not a single number.</p>
         </details>
         <details class="faq-item">
+          <summary>Where do the live market numbers come from?</summary>
+          <p>Server-side Vercel functions call FRED (energy prices), Finnhub (ETF quotes + headlines), and FMP as fallback — reusing API keys from the SavvyETF project. Keys never ship to the browser.</p>
+        </details>
+        <details class="faq-item">
           <summary>Is SavvyClimateRiskMonitor.com available?</summary>
           <p>The product currently runs on a free Vercel URL (<code>*.vercel.app</code>). A custom <code>.com</code> is optional: buy the domain, then attach it in Vercel Domains — same site, your brand on the URL.</p>
         </details>
