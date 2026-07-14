@@ -171,6 +171,23 @@ async function fetchYahooHistory(symbol, range = "2y") {
   };
 }
 
+async function fetchFinnhubCandles(apiKey, symbol, days = 365) {
+  const to = Math.floor(Date.now() / 1000);
+  const from = to - days * 24 * 60 * 60;
+  const url =
+    `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}` +
+    `&resolution=D&from=${from}&to=${to}&token=${apiKey}`;
+  const data = await fetchJson(url);
+  if (!data || data.s !== "ok" || !Array.isArray(data.t) || !data.t.length) return null;
+
+  const labels = data.t.map((ts) => new Date(ts * 1000).toISOString().slice(0, 10));
+  const closes = data.c.map(Number);
+  const base = closes[0] || 1;
+  const indexed = closes.map((c) => (c / base) * 100);
+
+  return { labels, values: closes, indexed, source: "finnhub" };
+}
+
 async function fetchEquityHistory(symbol, { finnhubKey, fmpKey }) {
   if (finnhubKey) {
     try {
@@ -189,21 +206,6 @@ async function fetchEquityHistory(symbol, { finnhubKey, fmpKey }) {
     }
   }
   return fetchYahooHistory(symbol, "2y");
-}
-  const to = Math.floor(Date.now() / 1000);
-  const from = to - days * 24 * 60 * 60;
-  const url =
-    `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}` +
-    `&resolution=D&from=${from}&to=${to}&token=${apiKey}`;
-  const data = await fetchJson(url);
-  if (!data || data.s !== "ok" || !Array.isArray(data.t) || !data.t.length) return null;
-
-  const labels = data.t.map((ts) => new Date(ts * 1000).toISOString().slice(0, 10));
-  const closes = data.c.map(Number);
-  const base = closes[0] || 1;
-  const indexed = closes.map((c) => (c / base) * 100);
-
-  return { labels, values: closes, indexed, source: "finnhub" };
 }
 
 async function fetchFinnhubNews(apiKey) {
